@@ -12,22 +12,29 @@ bot = Bot(token=API_KEY)
 dp = Dispatcher()
 users = dict()
 usersKeySecret = dict()
+aliveAnalyzings = set()
 
 
 @dp.message(Command("start"))
 async def cmdStart(message: types.Message):
     await message.answer("🔥Welcome to the <b>Codeforces Coach Bot!</b>🔥\nI will help you to analyze your CF rounds. \
-Send me your handle via command /handle", parse_mode="HTML")
+Send me your handle via command <CODE>/handle</CODE>", parse_mode="HTML")
 
 
 @dp.message(Command("handle"))
 async def setHandle(message: types.Message, command: CommandObject):
-    users[message.from_user.id] = CF()
-    usersKeySecret[message.from_user.id] = ['', '']
-    if not users[message.from_user.id].setHandle(command.args):
+    id = message.from_user.id
+    if not command.args:
+        await message.answer("Error! Empty handle, try again")
+        return
+    users[id] = CF()
+    usersKeySecret[id] = ['', '']
+    if not users[id].setHandle(command.args):
         await message.answer("Wrong handle, try again, bro")
     else:
-        await message.answer("Success!")
+        mssg = "<b>Success!</b>\nWelcome, " + '<i>' + command.args + '</i>' + '\n'
+        mssg += "Current rating: " + '<CODE>' + str(users[id].getRating()) + '</CODE>'
+        await message.answer(mssg, parse_mode='HTML')
         await message.answer("Now you need to create CF-API on https://codeforces.com/settings/api \
 and send in two messages: /key [apiKey] and /secret [apiSecret]")
 
@@ -62,7 +69,7 @@ async def getFriends(message: types.Message):
     for friend in friends:
         mssg += str(cnt + 1) + '. ' + friend + '\n'
         cnt += 1
-    mssg += '<i>Note: To analyze your friend or anybody on codeforces use</i> /analyze [handle]'
+    mssg += '<i>Note: To analyze your friend or anybody on codeforces use <CODE>/analyze [handle]</CODE>'
     await message.answer(mssg, parse_mode='HTML')
 
 
@@ -74,23 +81,46 @@ async def getAnalysis(message: types.Message, command: CommandObject):
         if not users[command.args].setHandle(command.args):
             await message.answer('Incorrect! Try again')
             return
-        users[command.args].startAnalyzing()
-        with open("codeforces/" + command.args + '/' + command.args + '.txt', 'r') as f:
-            await message.answer(f.read(), parse_mode='HTML')
+        mssg = await message.answer("<i>Analyzing...</i>", parse_mode='HTML')
+        gen = users[command.args].startAnalyzing()
+        cnt = 0
+        aliveAnalyzings.add(command.args)
+        for _ in gen:
+            with open("codeforces/" + command.args + '/' + command.args + '.txt', 'r') as f:
+                await mssg.edit_text(f.read(), parse_mode='HTML')
+            if cnt % 10 == 9:
+                f = open("codeforces/" + command.args + '/' + command.args + '.txt', 'w')
+                f.write('')
+                f.close()
+                mssg = await message.answer("<i>Analyzing...</i>", parse_mode='HTML')
+            cnt += 1
+        # with open("codeforces/" + command.args + '/' + command.args + '.txt', 'r') as f:
+        #     await message.answer(f.read(), parse_mode='HTML')
     else:
-        users[message.from_user.id].startAnalyzing()
-        with open("codeforces/" + users[message.from_user.id].getHandle() + '/' + users[
-            message.from_user.id].getHandle() + '.txt', 'r') as f:
-            await message.answer(f.read(), parse_mode='HTML')
+        aliveAnalyzings.add(message.from_user.id)
+        mssg = await message.answer("<i>Analyzing...</i>", parse_mode='HTML')
+        gen = users[message.from_user.id].startAnalyzing()
+        for _ in gen:
+            with open("codeforces/" + users[message.from_user.id].getHandle() + '/' + users[
+                message.from_user.id].getHandle() + '.txt', 'r') as f:
+                await mssg.edit_text(f.read(), parse_mode='HTML')
+
+
+@dp.message(Command("stop"))
+async def stopAnalyzing(message: types.Message):
+    for id in aliveAnalyzings:
+        users[id].goStop()
+    await message.answer("<CODE>Analysis stopped by you!</CODE>", parse_mode='HTML')
 
 
 @dp.message(Command("help"))
 async def cmdHelp(message: types.Message):
-    await message.answer("""1. /handle [your nick] — set handle
-2. /key — set [your key] (codeforces API)
-3. /secret — set [your secret] (codeforces API)
-4. /friends — display all of your friends (are available only via CF API)
-5. /analyze [handle] — start analyzing account. if handle missed -- will analyze your account. <b>WARNING:</b> First running can take a few minutes! 
+    await message.answer("""<CODE>/handle [your nick]</CODE> — set handle
+<CODE>/key</CODE> — set [your key] (codeforces API)
+<CODE>/secret</CODE> — set [your secret] (codeforces API)
+<CODE>/friends</CODE> — display all of your friends (are available only via CF API)
+<CODE>/analyze [handle]</CODE> — start analyzing account. if handle missed -- will analyze your account. <b>WARNING:</b> First running can take a few minutes!
+<CODE>/stop</CODE> — stop analyzing
 """, parse_mode='HTML')
 
 
@@ -100,4 +130,3 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-

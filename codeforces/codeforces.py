@@ -15,6 +15,7 @@ class CF:
         self.__allContests = []  # element: {'id' : 1, 'div' : 3}
         self.__analayzeReport = []  # report for every round
         self.__lastRequestTime = -1
+        self.stop = False
 
     def __sha512Hex(self, s):
         try:
@@ -52,7 +53,7 @@ class CF:
 
     def __askCodeforces(self, requestTail: str):
         if (int(time.time()) - self.__lastRequestTime) / 1000 < 2:
-            time.sleep(2)
+            time.sleep(2 - (int(time.time()) - self.__lastRequestTime) / 1000)
         self.__lastRequestTime = int(time.time())
         r = None
         try:
@@ -80,63 +81,79 @@ class CF:
         request = self.__createRequest('user.friends', [], True)
         return self.__askCodeforces(request) != False
 
-    def __bigAnayseSus(self):
+    def __analyzeOneRound(self, allSubs, contestInfo, f, cntDiv, i):
+        count = len(contestInfo['problems'])
+        solved = 0
+        for subsmission in allSubs:
+            solved += subsmission["verdict"] == "OK"
+        percent = round(solved / count * 100.0, 2)
+        ratingDelta = self.__allContests[i]['delta']
+        div = self.__allContests[i]['div']
+        f.write('<i>' + self.__allContests[i]['name'] + ':</i> <b>' + '+' * (ratingDelta > 0) + str(
+            ratingDelta) + '</b> to your rating' + '\n' + '   ')
+        if cntDiv[div][1] == 0:
+            f.write('It was first Div. ' +
+                    str(self.__allContests[i]['div']) + ' Round for you! ')
+        else:
+            prevPercent = round(cntDiv[div][0] / cntDiv[div][1], 2)
+            percentDelta = round(abs(prevPercent - percent), 2)
+            if percentDelta < 10:
+                f.write('<CODE>So so.</CODE> ')
+                if prevPercent <= percent:
+                    f.write('<b>' + str(percentDelta) +
+                            "%" + '</b>' + ' downgrade. ')
+                else:
+                    f.write('<b>' + self.__handle + '</b>' + ' can do it better! Only ' +
+                            '<i>' + str(percentDelta) + "%" + '</i>' + " increase. ")
+            elif percent > prevPercent:
+                f.write('<CODE>Greate!</CODE> ' + '<i>' + str(percentDelta
+                                                 ) + '%' + '</i>' + ' increase! ')
+            else:
+                f.write('<CODE>Awful.</CODE> ' + '<b>' + self.__handle + '</b>' + ' need to practiece more or delete your CF! ' +
+                        '<i>' + str(percentDelta) + '%' + '</i>' + ' downgrade! ')
+        f.write('<b>' + self.__handle + '</b>' + ' solved ' + '<i>' +
+                str(percent) + "%" + '</i>' + " tasks on round. ")
+        f.write('\n')
+        cntDiv[div][0] += percent
+        cntDiv[div][1] += 1
+
+    def __bigAnayseSus(self, fr=0, count=0):
         f = open('codeforces/' + self.__handle +
                  '/' + self.__handle + ".txt", 'w')
         f.write('<b>' + self.__handle + '</b>' + ' rounds analysis:\n')
+        f.close()
         cntDiv = dict()
         cntDiv[1] = [0, 0]
         cntDiv[2] = [0, 0]
         cntDiv[3] = [0, 0]
-        for i in range(len(self.__allContests) - 5, len(self.__allContests)):
+        cntDiv[0] = [0, 0]
+        for i in range(fr, len(self.__allContests)):
+            f = open('codeforces/' + self.__handle +
+                     '/' + self.__handle + ".txt", 'a')
             f.write('   <b>' + str(i + 1) + '.</b> ')
             allSubs = self.__askCodeforces(self.__createRequest('contest.status', [(
                 'contestId', str(self.__allContests[i]['id'])), ('handle', self.__handle)]))["result"]
             contestInfo = self.__askCodeforces(self.__createRequest('contest.standings', [(
                 'contestId', str(self.__allContests[i]['id'])), ('handle', self.__handle)]))["result"]
-            count = len(contestInfo['problems'])
-            solved = 0
-            for subsmission in allSubs:
-                solved += subsmission["verdict"] == "OK"
-            percent = round(solved / count * 100.0, 2)
-            ratingDelta = self.__allContests[i]['delta']
-            div = self.__allContests[i]['div']
-            f.write('<i>' + self.__allContests[i]['name'] + ':</i> <b>' + '+' * (ratingDelta > 0) + str(
-                ratingDelta) + '</b> to your rating' + '\n' + '   ')
-            if cntDiv[div][1] == 0:
-                f.write('It was first Div. ' +
-                        str(self.__allContests[i]['div']) + ' Round for you! ')
-            else:
-                prevPercent = round(cntDiv[div][0] / cntDiv[div][1], 2)
-                percentDelta = round(abs(prevPercent - percent), 2)
-                if percentDelta < 10:
-                    f.write('So so.')
-                    if prevPercent <= percent:
-                        f.write('<b>' + str(percentDelta) +
-                                "%" + '</b>' + ' downgrade. ')
-                    else:
-                        f.write('<b>' + self.__handle + '</b>' + ' can do it better! Only ' +
-                                '<i>' + str(percentDelta) + "%" + '</i>' + " increase. ")
-                elif percent > prevPercent:
-                    f.write('Greate! ' + '<i>' + str(percentDelta
-                                                     ) + '%' + '</i>' + ' increase! ')
-                else:
-                    f.write('Awful. ' + '<b>' + self.__handle + '</b>' + ' need to practiece more or delete your CF! ' +
-                            '<i>' + str(percentDelta) + '%' + '</i>' + ' downgrade! ')
-            f.write('<b>' + self.__handle + '</b>' + ' solved ' + '<i>' +
-                    str(percent) + "%" + '</i>' + " tasks on round. ")
-            f.write('\n')
-            cntDiv[div][0] += percent
-            cntDiv[div][1] += 1
+            self.__analyzeOneRound(allSubs, contestInfo, f, cntDiv, i)
+            f.close()
+            yield
+            if self.stop:
+                f.close()
+                self.stop = False
+                return
         f.close()
 
-    def __loadInfo(self) -> None:
+    def __loadInfo(self) -> bool:
         ratingReq = self.__askCodeforces(self.__createRequest(
             'user.rating', [('handle', self.__handle)]))
         if ratingReq == False:
             return False
         ratingReq = ratingReq["result"]
-        self.__rating = ratingReq[-1]["newRating"]
+        try:
+            self.__rating = ratingReq[-1]["newRating"]
+        except:
+            pass
         for contest in ratingReq:
             self.__allContests.append(dict())
             self.__allContests[-1]['id'] = contest["contestId"]
@@ -176,9 +193,12 @@ class CF:
         return len(self.__allContests) * 3
 
     def startAnalyzing(self):
-        self.__bigAnayseSus()
+        return self.__bigAnayseSus()
 
     def getFriendsList(self):
         request = self.__createRequest('user.friends', [], True)
         req = self.__askCodeforces(request)
         return req["result"]
+
+    def goStop(self):
+        self.stop = True
