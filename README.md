@@ -22,6 +22,7 @@ $ python3 bot.py
 - ```/secret``` — set [your secret] (codeforces API)
 - ```/friends``` — display all of your friends (are available only via CF API)
 - ```/analyze [handle]``` — start analyzing account. if handle missed -- will analyze your account. <b>WARNING:</b> Can take a few minutes! 
+- ```/stop``` — stop all analyzings
 
 ## Roadmap
 - ```/training``` — after analayzing bot will send you tasks, which should improve your level
