@@ -4,7 +4,7 @@
 ![Alt Text](utils/tutorial.gif)
 
 ## Usage
-- tg: @CodeforcesCoach_bot
+- my [bot](https://t.me/CodeforcesCoach_bot)
 - your own bot
 ```bash
 $ git clone git@github.com:letsolum/CodeforcesCoach-Bot.git
