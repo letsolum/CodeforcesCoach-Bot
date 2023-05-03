@@ -69,7 +69,7 @@ async def getFriends(message: types.Message):
     for friend in friends:
         mssg += str(cnt + 1) + '. ' + friend + '\n'
         cnt += 1
-    mssg += '<i>Note: To analyze your friend or anybody on codeforces use <CODE>/analyze [handle]</CODE>'
+    mssg += '<i>Note</i>: To analyze your friend or anybody on codeforces use <CODE>/analyze [handle]</CODE>'
     await message.answer(mssg, parse_mode='HTML')
 
 
@@ -100,10 +100,17 @@ async def getAnalysis(message: types.Message, command: CommandObject):
         aliveAnalyzings.add(message.from_user.id)
         mssg = await message.answer("<i>Analyzing...</i>", parse_mode='HTML')
         gen = users[message.from_user.id].startAnalyzing()
+        cnt = 0
         for _ in gen:
             with open("codeforces/" + users[message.from_user.id].getHandle() + '/' + users[
                 message.from_user.id].getHandle() + '.txt', 'r') as f:
                 await mssg.edit_text(f.read(), parse_mode='HTML')
+            if cnt % 10 == 9:
+                f = open("codeforces/" + command.args + '/' + command.args + '.txt', 'w')
+                f.write('')
+                f.close()
+                mssg = await message.answer("<i>Analyzing...</i>", parse_mode='HTML')
+            cnt += 1
 
 
 @dp.message(Command("stop"))
