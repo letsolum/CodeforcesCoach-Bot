@@ -1,7 +1,7 @@
 # CodeforcesCoach Bot
 
 ## Description
-![Alt Text](utils/toGif.gif)
+![Alt Text](utils/tutorial.gif)
 
 ## Usage
 - tg: @CodeforcesCoach_bot
