@@ -33,7 +33,8 @@ async def setHandle(message: types.Message, command: CommandObject):
         await message.answer("Wrong handle, try again, bro")
     else:
         mssg = "<b>Success!</b>\nWelcome, " + '<i>' + command.args + '</i>' + '\n'
-        mssg += "Current rating: " + '<CODE>' + str(users[id].getRating()) + '</CODE>'
+        mssg += "Current rating: " + '<CODE>' + \
+            str(users[id].getRating()) + '</CODE>'
         await message.answer(mssg, parse_mode='HTML')
         await message.answer("Now you need to create CF-API on https://codeforces.com/settings/api \
 and send in two messages: /key [apiKey] and /secret [apiSecret]")
@@ -89,7 +90,8 @@ async def getAnalysis(message: types.Message, command: CommandObject):
             with open("codeforces/" + command.args + '/' + command.args + '.txt', 'r') as f:
                 await mssg.edit_text(f.read(), parse_mode='HTML')
             if cnt % 10 == 9:
-                f = open("codeforces/" + command.args + '/' + command.args + '.txt', 'w')
+                f = open("codeforces/" + command.args +
+                         '/' + command.args + '.txt', 'w')
                 f.write('')
                 f.close()
                 mssg = await message.answer("<i>Analyzing...</i>", parse_mode='HTML')
@@ -103,10 +105,11 @@ async def getAnalysis(message: types.Message, command: CommandObject):
         cnt = 0
         for _ in gen:
             with open("codeforces/" + users[message.from_user.id].getHandle() + '/' + users[
-                message.from_user.id].getHandle() + '.txt', 'r') as f:
+                    message.from_user.id].getHandle() + '.txt', 'r') as f:
                 await mssg.edit_text(f.read(), parse_mode='HTML')
             if cnt % 10 == 9:
-                f = open("codeforces/" + command.args + '/' + command.args + '.txt', 'w')
+                f = open("codeforces/" + users[message.from_user.id].getHandle() + '/' + users[
+                    message.from_user.id].getHandle() + '.txt', 'w')
                 f.write('')
                 f.close()
                 mssg = await message.answer("<i>Analyzing...</i>", parse_mode='HTML')
