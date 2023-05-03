@@ -110,6 +110,7 @@ async def getAnalysis(message: types.Message, command: CommandObject):
 async def stopAnalyzing(message: types.Message):
     for id in aliveAnalyzings:
         users[id].goStop()
+    aliveAnlyzings.clear()
     await message.answer("<CODE>Analysis stopped by you!</CODE>", parse_mode='HTML')
 
 
