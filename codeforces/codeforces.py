@@ -6,16 +6,16 @@ import os
 
 
 class CF:
-    def __init__(self):
+    def __init__(self, id):
         self.__codeforcesUrl = 'https://codeforces.com/api/'
         self.__apiKey = ''
         self.__apiSecret = ''
         self.__handle = ''
         self.__rating = 0
         self.__allContests = []  # element: {'id' : 1, 'div' : 3}
-        self.__analayzeReport = []  # report for every round
         self.__lastRequestTime = -1
-        self.stop = False
+        self.__stop = False
+        self.__fileName = str(id)
 
     def __sha512Hex(self, s):
         try:
@@ -119,7 +119,7 @@ class CF:
 
     def __bigAnayseSus(self, fr=0, count=0):
         f = open('codeforces/' + self.__handle +
-                 '/' + self.__handle + ".txt", 'w')
+                 '/' + self.__fileName + ".txt", 'w')
         f.write('<b>' + self.__handle + '</b>' + ' rounds analysis:\n')
         f.close()
         cntDiv = dict()
@@ -129,7 +129,7 @@ class CF:
         cntDiv[0] = [0, 0]
         for i in range(fr, len(self.__allContests)):
             f = open('codeforces/' + self.__handle +
-                     '/' + self.__handle + ".txt", 'a')
+                     '/' + self.__fileName + ".txt", 'a')
             f.write('   <b>' + str(i + 1) + '.</b> ')
             allSubs = self.__askCodeforces(self.__createRequest('contest.status', [(
                 'contestId', str(self.__allContests[i]['id'])), ('handle', self.__handle)]))["result"]
@@ -138,9 +138,9 @@ class CF:
             self.__analyzeOneRound(allSubs, contestInfo, f, cntDiv, i)
             f.close()
             yield
-            if self.stop:
+            if self.__stop:
                 f.close()
-                self.stop = False
+                self.__stop = False
                 return
         f.close()
 
@@ -201,4 +201,4 @@ class CF:
         return req["result"]
 
     def goStop(self):
-        self.stop = True
+        self.__stop = True
