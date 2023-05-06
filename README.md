@@ -4,7 +4,7 @@
 ![Alt Text](utils/tutorial.gif)
 
 ## Usage
-- my [bot](https://t.me/CodeforcesCoach_bot)
+- tg: @CodeforcesCoach_bot
 - your own bot
 ```bash
 $ git clone git@github.com:letsolum/CodeforcesCoach-Bot.git
@@ -17,12 +17,15 @@ $ python3 bot.py
 ```
 
 ## Interface
-- ```/handle [your nick]``` — set handle
-- ```/key``` — set [your key] (codeforces API)
-- ```/secret``` — set [your secret] (codeforces API)
-- ```/friends``` — display all of your friends (are available only via CF API)
-- ```/analyze [handle]``` — start analyzing account. if handle missed -- will analyze your account. <b>WARNING:</b> Can take a few minutes! 
-- ```/stop``` — stop all analyzings
+- <CODE>/start</CODE> — init bot work
+- <CODE>/help</CODE> — displays all commands
+- <CODE>/handle [your nick]</CODE> — set handle
+- <CODE>/key</CODE> — set [your key] (codeforces API)
+- <CODE>/secret</CODE> — set [your secret] (codeforces API)
+- <CODE>/friends</CODE> — display all of your friends (available only via CF API)
+- <CODE>/analyze [handle]</CODE> — start analyse account. if handle missed — will analyze your account. <b>WARNING:</b> First running can take a few minutes!
+- <CODE>/process</CODE> — displays all running analysis
+- <CODE>/stop [num]</CODE> — stop analyse. If <CODE>[num]</CODE> is empty all analysis stopes. Else <CODE>[num]</CODE> should contain codeforces handle
 
 ## Roadmap
 - ```/training``` — after analayzing bot will send you tasks, which should improve your level

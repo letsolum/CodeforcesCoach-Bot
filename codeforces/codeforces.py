@@ -3,6 +3,7 @@ import hashlib
 import time
 import random
 import os
+import const
 
 
 class CF:
@@ -26,10 +27,10 @@ class CF:
     # parameters: [(parametr_1, value_1), (parametr_2, value_2), ..., (parametr_n, value_n)]
     def __createRequest(self, method: str, parameters: list, apiMode=False) -> str:
         parameters.sort()
-        request = self.__codeforcesUrl + method + '?'
+        request = self.__codeforcesUrl + method + const.QM
         for (parametr, value) in parameters:
-            request += parametr + '=' + value + '&'
-        if request[-1] == '&':
+            request += parametr + const.EQ + value + const.AND
+        if request[-1] == const.AND:
             request = request[:-1]
         if not apiMode:
             return request
@@ -37,17 +38,17 @@ class CF:
         for _ in range(6):
             rnd += str(random.randint(0, 9))
         timeNow = str(int(time.time()))
-        if request[-1] != '?':
-            request += '&'
+        if request[-1] != const.QM:
+            request += const.AND
         request += 'time=' + timeNow + \
                    '&apiKey=' + self.__apiKey + '&apiSig=' + rnd
         parameters.append(('time', timeNow))
         parameters.append(('apiKey', self.__apiKey))
         parameters.sort()
-        forHash = rnd + '/' + method + '?'
+        forHash = rnd + '/' + method + const.QM
         for (parametr, value) in parameters:
-            forHash += parametr + '=' + value + '&'
-        forHash = forHash[:-1] + '#' + self.__apiSecret
+            forHash += parametr + const.EQ + value + const.AND
+        forHash = forHash[:-1] + const.GRID + self.__apiSecret
         request += self.__sha512Hex(forHash)
         return request
 
