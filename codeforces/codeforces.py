@@ -239,3 +239,4 @@ class CF:
                 interstingTasks.append(problem)
         random.shuffle(interstingTasks)
         return interstingTasks[:5]
+
