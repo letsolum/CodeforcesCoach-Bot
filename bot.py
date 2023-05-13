@@ -161,6 +161,33 @@ async def allProcess(message: types.Message):
     await message.answer(mssg, parse_mode='HTML')
 
 
+@dp.message(Command("train"))
+async def train(message: types.Message):
+    id = message.from_user.id
+    if (id, id) not in users:
+        await message.answer("Error! First of all set your handle <CODE>/handle [ur nick]</CODE>", parse_mode='HTML')
+        return
+    mssg = await message.answer("<i>Analyse 10 last rounds...</i>", parse_mode='HTML')
+    gen = users[(id, id)].startAnalyzing(10, True)
+    for _ in gen:
+        with open("codeforces/" + users[(id, id)].getHandle() + '/' + str(id) + '.txt', 'r') as f:
+            await mssg.edit_text(f.read(), parse_mode='HTML')
+    badTask = None
+    with open("codeforces/" + users[(id, id)].getHandle() + '/' + str(id) + '.txt', 'r') as f:
+        txt = f.read().splitlines()[-1]
+        await message.answer('<b>' + txt + '</b>', parse_mode='HTML')
+        badTask = txt[-1]
+    tasks = users[(id, id)].trainMode(badTask)
+    url = 'https://codeforces.com/contest/'
+    answer = ''
+    cnt = 1
+    for tsk in tasks:
+        answer += str(cnt) + '. ' + '<a href="' + url + str(tsk['contestId']) + '/problem/' + tsk['index'] + '">' + str(
+            tsk['contestId']) + tsk['index'] + '</a>\n'
+        cnt += 1
+    await message.answer(answer, parse_mode='HTML')
+
+
 @dp.message(Command("help"))
 async def cmdHelp(message: types.Message):
     await message.answer("""<CODE>/start</CODE> — init bot work
@@ -170,6 +197,7 @@ async def cmdHelp(message: types.Message):
 <CODE>/secret</CODE> — set [your secret] (codeforces API)
 <CODE>/friends</CODE> — display all of your friends (available only via CF API)
 <CODE>/analyze [handle]</CODE> — start analyse account. if handle missed -- will analyze your account. <b>WARNING:</b> First running can take a few minutes!
+<CODE>/train</CODE> — available only for self-using (<i>you should set your handle firstly</i>)
 <CODE>/process</CODE> — displays all running analysis
 <CODE>/stop [num]</CODE> — stop analyse. If <CODE>[num]</CODE> is empty all analysis stopes. Else <CODE>[num]</CODE> should contain codeforces handle 
 """, parse_mode='HTML')

@@ -3,7 +3,7 @@ import hashlib
 import time
 import random
 import os
-import const
+import codeforces.const as const
 
 
 class CF:
@@ -82,43 +82,54 @@ class CF:
         request = self.__createRequest('user.friends', [], True)
         return self.__askCodeforces(request) != False
 
-    def __analyzeOneRound(self, allSubs, contestInfo, f, cntDiv, i):
+    def __analyzeOneRound(self, allSubs, contestInfo, f, cntDiv, i, onlyRating=False):
         count = len(contestInfo['problems'])
         solved = 0
         for subsmission in allSubs:
-            solved += subsmission["verdict"] == "OK"
+            solved += (subsmission["verdict"] == "OK" and subsmission["author"]["participantType"] == "CONTESTANT")
         percent = round(solved / count * 100.0, 2)
         ratingDelta = self.__allContests[i]['delta']
         div = self.__allContests[i]['div']
         f.write('<i>' + self.__allContests[i]['name'] + ':</i> <b>' + '+' * (ratingDelta > 0) + str(
             ratingDelta) + '</b> to your rating' + '\n' + '   ')
-        if cntDiv[div][1] == 0:
-            f.write('It was first Div. ' +
-                    str(self.__allContests[i]['div']) + ' Round for you! ')
-        else:
-            prevPercent = round(cntDiv[div][0] / cntDiv[div][1], 2)
-            percentDelta = round(abs(prevPercent - percent), 2)
-            if percentDelta < 10:
-                f.write('<CODE>So so.</CODE> ')
-                if prevPercent <= percent:
-                    f.write('<b>' + str(percentDelta) +
-                            "%" + '</b>' + ' downgrade. ')
-                else:
-                    f.write('<b>' + self.__handle + '</b>' + ' can do it better! Only ' +
-                            '<i>' + str(percentDelta) + "%" + '</i>' + " increase. ")
-            elif percent > prevPercent:
-                f.write('<CODE>Greate!</CODE> ' + '<i>' + str(percentDelta
-                                                 ) + '%' + '</i>' + ' increase! ')
+        if not onlyRating:
+            if cntDiv[div][1] == 0:
+                f.write('It was first Div. ' +
+                        str(self.__allContests[i]['div']) + ' Round for you! ')
             else:
-                f.write('<CODE>Awful.</CODE> ' + '<b>' + self.__handle + '</b>' + ' need to practiece more or delete your CF! ' +
+                prevPercent = round(cntDiv[div][0] / cntDiv[div][1], 2)
+                percentDelta = round(abs(prevPercent - percent), 2)
+                if percentDelta < 10:
+                    f.write('<CODE>So so.</CODE> ')
+                    if prevPercent <= percent:
+                        f.write('<b>' + str(percentDelta) +
+                                "%" + '</b>' + ' downgrade. ')
+                    else:
+                        f.write('<b>' + self.__handle + '</b>' + ' can do it better! Only ' +
+                                '<i>' + str(percentDelta) + "%" + '</i>' + " increase. ")
+                elif percent > prevPercent:
+                    f.write('<CODE>Greate!</CODE> ' + '<i>' + str(percentDelta
+                                                                  ) + '%' + '</i>' + ' increase! ')
+                else:
+                    f.write(
+                        '<CODE>Awful.</CODE> ' + '<b>' + self.__handle + '</b>' + ' need to practiece more or delete your CF! ' +
                         '<i>' + str(percentDelta) + '%' + '</i>' + ' downgrade! ')
-        f.write('<b>' + self.__handle + '</b>' + ' solved ' + '<i>' +
-                str(percent) + "%" + '</i>' + " tasks on round. ")
-        f.write('\n')
-        cntDiv[div][0] += percent
-        cntDiv[div][1] += 1
+            f.write('<b>' + self.__handle + '</b>' + ' solved ' + '<i>' +
+                    str(percent) + "%" + '</i>' + " tasks on round. ")
+            f.write('\n')
+            cntDiv[div][0] += percent
+            cntDiv[div][1] += 1
+        else:
+            done = dict()
+            for task in contestInfo['problems']:
+                done[task['index'][:1]] = False
+            for subsmission in allSubs:
+                if not (subsmission["verdict"] == "OK" and subsmission["author"]["participantType"] == "CONTESTANT"):
+                    continue
+                done[subsmission['problem']['index'][:1]] = True
+            return done
 
-    def __bigAnayseSus(self, fr=0, count=0):
+    def __bigAnayseSus(self, fr=0, onlyRating=False):
         f = open('codeforces/' + self.__handle +
                  '/' + self.__fileName + ".txt", 'w')
         f.write('<b>' + self.__handle + '</b>' + ' rounds analysis:\n')
@@ -128,21 +139,37 @@ class CF:
         cntDiv[2] = [0, 0]
         cntDiv[3] = [0, 0]
         cntDiv[0] = [0, 0]
-        for i in range(fr, len(self.__allContests)):
+        if fr == 0:
+            fr = len(self.__allContests)
+        allNotSolved = {'A': 0, 'B': 0, 'C': 0, 'D': 0, 'E': 0, 'F': 0, 'G': 0, 'H': 0}
+        for i in range(len(self.__allContests) - fr, len(self.__allContests)):
             f = open('codeforces/' + self.__handle +
                      '/' + self.__fileName + ".txt", 'a')
             f.write('   <b>' + str(i + 1) + '.</b> ')
             allSubs = self.__askCodeforces(self.__createRequest('contest.status', [(
                 'contestId', str(self.__allContests[i]['id'])), ('handle', self.__handle)]))["result"]
             contestInfo = self.__askCodeforces(self.__createRequest('contest.standings', [(
-                'contestId', str(self.__allContests[i]['id'])), ('handle', self.__handle)]))["result"]
-            self.__analyzeOneRound(allSubs, contestInfo, f, cntDiv, i)
+                'contestId', str(self.__allContests[i]['id'])), ('handles', self.__handle)]))["result"]
+            done = self.__analyzeOneRound(allSubs, contestInfo, f, cntDiv, i, onlyRating)
+            if done:
+                for tsk in done:
+                    if not done[tsk]:
+                        allNotSolved[tsk] += 1
             f.close()
             yield
             if self.__stop:
                 f.close()
                 self.__stop = False
                 return
+        ma = 0
+        badTask = None
+        for tsk in allNotSolved:
+            if allNotSolved[tsk] > ma:
+                ma = allNotSolved[tsk]
+                badTask = tsk
+        f = open('codeforces/' + self.__handle +
+                 '/' + self.__fileName + ".txt", 'a')
+        f.write('The worst task for you is ' + badTask)
         f.close()
 
     def __loadInfo(self) -> bool:
@@ -193,8 +220,8 @@ class CF:
         # how long will it takes CF to answer all req
         return len(self.__allContests) * 3
 
-    def startAnalyzing(self):
-        return self.__bigAnayseSus()
+    def startAnalyzing(self, fr=0, onlyRating=False):
+        return self.__bigAnayseSus(fr, onlyRating)
 
     def getFriendsList(self):
         request = self.__createRequest('user.friends', [], True)
@@ -203,3 +230,13 @@ class CF:
 
     def goStop(self):
         self.__stop = True
+
+    def trainMode(self, badTask: str):
+        problems = self.__askCodeforces(self.__createRequest('problemset.problems', []))['result']['problems']
+        interstingTasks = []
+        for problem in problems:
+            if problem['index'] == badTask and 'rating' in problem and problem['rating'] <= self.__rating * 1.6:
+                interstingTasks.append(problem)
+        random.shuffle(interstingTasks)
+        return interstingTasks[:5]
+

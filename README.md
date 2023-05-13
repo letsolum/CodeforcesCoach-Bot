@@ -23,10 +23,10 @@ $ python3 bot.py
 - <CODE>/key</CODE> — set [your key] (codeforces API)
 - <CODE>/secret</CODE> — set [your secret] (codeforces API)
 - <CODE>/friends</CODE> — display all of your friends (available only via CF API)
-- <CODE>/analyze [handle]</CODE> — start analyse account. if handle missed — will analyze your account. <b>WARNING:</b> First running can take a few minutes!
+- <CODE>/analyze [handle]</CODE> — start analyse account. if handle missed -- will analyze your account. <b>WARNING:</b> First running can take a few minutes!
+- <CODE>/train</CODE> — available only for self-using (<i>you should set your handle firstly</i>)
 - <CODE>/process</CODE> — displays all running analysis
 - <CODE>/stop [num]</CODE> — stop analyse. If <CODE>[num]</CODE> is empty all analysis stopes. Else <CODE>[num]</CODE> should contain codeforces handle
 
-## Roadmap
-- ```/training``` — after analayzing bot will send you tasks, which should improve your level
-- increase speed level
+## Version 1.2 update
+- added new command ```/train```
